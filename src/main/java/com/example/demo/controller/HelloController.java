@@ -17,4 +17,9 @@ public class HelloController {
     public String version() {
         return "v1.0.0";
     }
+
+    @GetMapping("/time")
+    public String time() {
+        return java.time.LocalDateTime.now().toString();
+    }
 }

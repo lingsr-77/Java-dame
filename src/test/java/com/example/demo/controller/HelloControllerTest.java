@@ -30,4 +30,10 @@ class HelloControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("v1.0.0"));
     }
+
+    @Test
+    void timeShouldReturnOk() throws Exception {
+        mockMvc.perform(get("/api/time"))
+                .andExpect(status().isOk());
+    }
 }
