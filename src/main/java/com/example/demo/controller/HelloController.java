@@ -12,4 +12,9 @@ public class HelloController {
     public String hello() {
         return "Hello from ClaudeJavaDemo!";
     }
+
+    @GetMapping("/version")
+    public String version() {
+        return "v1.0.0";
+    }
 }
