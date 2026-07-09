@@ -21,5 +21,5 @@ jobs:
             git pull origin master
             mvn clean package -DskipTests -q
             sudo systemctl restart java-demo
-            sleep 3
-            curl http://localhost:8080/api/hello
+            sleep 5
+            curl --retry 3 --retry-delay 2 http://localhost:8080/api/hello
