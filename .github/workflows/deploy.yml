@@ -20,5 +20,8 @@ jobs:
             cd /home/ubuntu/app
             git pull origin master
             mvn clean package -DskipTests -q
-            sudo pkill -f demo-0.0.1-SNAPSHOT.jar || true
-            sudo nohup java -jar target/demo-0.0.1-SNAPSHOT.jar > /home/ubuntu/app.log 2>&1 &
+            sudo pkill -f "demo-0.0.1-SNAPSHOT" || true
+            sleep 2
+            sudo setsid nohup java -jar target/demo-0.0.1-SNAPSHOT.jar > /home/ubuntu/app.log 2>&1 &
+            sleep 3
+            curl http://localhost:8080/api/hello
