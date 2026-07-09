@@ -29,7 +29,7 @@ jobs:
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: root
+          username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: target/demo-0.0.1-SNAPSHOT.jar
           target: /home/ubuntu/
@@ -38,8 +38,8 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
-          username: root
+          username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            pkill -f demo-0.0.1-SNAPSHOT.jar || true
-            nohup java -jar /home/ubuntu/demo-0.0.1-SNAPSHOT.jar > /home/ubuntu/app.log 2>&1 &
+            sudo pkill -f demo-0.0.1-SNAPSHOT.jar || true
+            sudo nohup java -jar /home/ubuntu/demo-0.0.1-SNAPSHOT.jar > /home/ubuntu/app.log 2>&1 &
