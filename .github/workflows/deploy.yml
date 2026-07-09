@@ -10,36 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 拉取代码
-        uses: actions/checkout@v4
-
-      - name: 安装 JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-
-      - name: 运行测试
-        run: mvn test
-
-      - name: 打包
-        run: mvn package -DskipTests
-
-      - name: 上传 jar 到服务器
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ubuntu
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: target/demo-0.0.1-SNAPSHOT.jar
-          target: /home/ubuntu/
-
-      - name: 重启服务
+      - name: 远程触发部署
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            cd /home/ubuntu/app
+            git pull origin master
+            mvn clean package -DskipTests -q
             sudo pkill -f demo-0.0.1-SNAPSHOT.jar || true
-            sudo nohup java -jar /home/ubuntu/demo-0.0.1-SNAPSHOT.jar > /home/ubuntu/app.log 2>&1 &
+            sudo nohup java -jar target/demo-0.0.1-SNAPSHOT.jar > /home/ubuntu/app.log 2>&1 &
