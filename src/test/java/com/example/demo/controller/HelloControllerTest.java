@@ -21,7 +21,8 @@ class HelloControllerTest {
     void helloShouldReturnGreeting() throws Exception {
         mockMvc.perform(get("/api/hello"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("梁鲲，你是癞疙包!"));
+                .andExpect(content().string(
+                        "<html><body style=\"display:flex;justify-content:center;align-items:center;height:100vh;margin:0;font-size:48px;font-weight:bold;\">梁鲲，你是癞疙包!</body></html>"));
     }
 
     @Test

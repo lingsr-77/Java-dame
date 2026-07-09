@@ -10,7 +10,9 @@ public class HelloController {
 
     @GetMapping("/hello")
     public String hello() {
-        return "梁鲲，你是癞疙包!";
+        return String.format(
+                "<html><body style=\"display:flex;justify-content:center;align-items:center;height:100vh;margin:0;font-size:48px;font-weight:bold;\">%s</body></html>",
+                "梁鲲，你是癞疙包!");
     }
 
     @GetMapping("/version")
