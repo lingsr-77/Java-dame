@@ -2,7 +2,17 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'java-app'
+  - job_name: 'gateway'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: ['app:8080']
+      - targets: ['gateway:8080']
+
+  - job_name: 'order-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['order-service:8081']
+
+  - job_name: 'user-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['user-service:8082']

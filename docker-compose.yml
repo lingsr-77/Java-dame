@@ -1,25 +1,55 @@
-services:
-  app:
-    build: .
-    ports:
-      - "8080:8080"
-    depends_on:
-      mysql:
-        condition: service_healthy
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/demo?useSSL=false&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root123
+# ============================================================
+# Spring Cloud Alibaba 微服务学习环境
+# ============================================================
+# 架构层级（从上到下启动）：
+#   1. 基础设施：Nacos, MySQL, Prometheus, Grafana
+#   2. 业务服务：user-service, order-service
+#   3. 网关：gateway
+#   4. 监控面板：sentinel-dashboard
 
+services:
+
+  # ============================================================
+  # 1. Nacos —— 服务注册中心 + 配置中心
+  # ============================================================
+  # 端口说明：
+  #   8848：HTTP 管理界面 + API
+  #   9848：gRPC 客户端端口（Nacos 2.x 新增）
+  #   9849：gRPC 服务端端口（Nacos 2.x 新增）
+  #   Nacos 2.x 默认用 gRPC 通信，所以 9848/9849 必须映射！
+  # 管理界面：http://your-server:8848/nacos  登录：nacos/nacos
+  nacos:
+    image: nacos/nacos-server:v2.3.2
+    container_name: nacos
+    environment:
+      - MODE=standalone                # 单机模式（集群模式用 MODE=cluster）
+      - JVM_XMS=128m                   # 初始堆 128MB（2GB 服务器必须调小）
+      - JVM_XMX=128m                   # 最大堆 128MB
+      - JVM_XMN=64m                    # 新生代 64MB
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8848/nacos/v1/console/health/readiness || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  # ============================================================
+  # 2. MySQL —— 数据库（已有，保持不变）
+  # ============================================================
   mysql:
     image: mysql:8.0
+    container_name: mysql
     environment:
       MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: demo
     command:
+      - --innodb-buffer-pool-size=32M     # 2GB 服务器必须限制 InnoDB 缓冲池
+      - --performance-schema=OFF          # 关闭性能监控节省内存
       - --slow_query_log=ON
       - --long_query_time=0.2
-      - --log_queries_not_using_indexes=ON
     ports:
       - "3306:3306"
     volumes:
@@ -28,21 +58,122 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 20
 
+  # ============================================================
+  # 3. Prometheus —— 指标采集
+  # ============================================================
   prometheus:
     image: prom/prometheus
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=1d'  # 只保留1天数据，省内存
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
 
+  # ============================================================
+  # 4. Grafana —— 指标可视化
+  # ============================================================
   grafana:
     image: grafana/grafana
+    container_name: grafana
     ports:
       - "3000:3000"
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: ""
+
+  # ============================================================
+  # 5. Sentinel Dashboard —— 熔断/限流可视化控制台
+  # ============================================================
+  # 管理界面：http://your-server:8858  登录：sentinel/sentinel
+  sentinel-dashboard:
+    build: ./sentinel-dashboard
+    container_name: sentinel-dashboard
+    ports:
+      - "8858:8858"
+    environment:
+      - JAVA_OPTS=-Xms128m -Xmx256m
+
+  # ============================================================
+  # 6. Order Service —— 订单服务（端口 8081）
+  # ============================================================
+  order-service:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    container_name: order-service
+    ports:
+      - "8081:8081"
+    environment:
+      # JVM 内存限制（2GB 服务器适配）
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx192m -XX:+UseG1GC -XX:+UseContainerSupport
+      # 覆盖本地 localhost 地址为 Docker 容器名
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER-ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER-ADDR=nacos:8848
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/demo?useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_CLOUD_SENTINEL_TRANSPORT_DASHBOARD=sentinel-dashboard:8858
+    depends_on:
+      nacos:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+
+  # ============================================================
+  # 7. User Service —— 用户服务（端口 8082）
+  # ============================================================
+  user-service:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    container_name: user-service
+    ports:
+      - "8082:8082"
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx192m -XX:+UseG1GC -XX:+UseContainerSupport
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER-ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER-ADDR=nacos:8848
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/demo?useSSL=false&allowPublicKeyRetrieval=true
+      - SPRING_CLOUD_SENTINEL_TRANSPORT_DASHBOARD=sentinel-dashboard:8858
+    depends_on:
+      nacos:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+
+  # ============================================================
+  # 8. Gateway —— API 网关（端口 8080）
+  # ============================================================
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx192m -XX:+UseG1GC -XX:+UseContainerSupport
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER-ADDR=nacos:8848
+      - SPRING_CLOUD_NACOS_CONFIG_SERVER-ADDR=nacos:8848
+      - SPRING_CLOUD_SENTINEL_TRANSPORT_DASHBOARD=sentinel-dashboard:8858
+    depends_on:
+      nacos:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 300M
 
 volumes:
   mysql_data:

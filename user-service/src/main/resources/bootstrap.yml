@@ -1,0 +1,23 @@
+# ============================================
+# bootstrap.yml —— 启动优先配置
+# ============================================
+# 加载顺序：bootstrap.yml → 从 Nacos 拉远程配置 → application.yml
+#
+# bootstrap.yml 的职责只有一个：告诉 Spring Cloud
+# "Nacos 在哪里"，以便后续配置可以从 Nacos 拉取。
+#
+# 为什么叫 "bootstrap"？
+# 就像电脑开机先加载 BIOS 再加载操作系统，
+# Spring Cloud 先加载 bootstrap.yml 找到配置中心，
+# 再加载 application.yml 完成应用配置。
+
+spring:
+  application:
+    name: user-service     # 服务名，Nacos 注册列表中显示的名字
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848   # Nacos 注册中心地址
+      config:
+        server-addr: localhost:8848   # Nacos 配置中心地址
+        file-extension: yml           # 远程配置文件的格式

@@ -1,0 +1,14 @@
+# order-service 启动优先配置
+# 作用和 user-service 的 bootstrap.yml 完全一样：
+# 只告诉 Spring Cloud "Nacos 在哪"
+
+spring:
+  application:
+    name: order-service     # 服务名，Nacos 里显示的名字
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+      config:
+        server-addr: localhost:8848
+        file-extension: yml

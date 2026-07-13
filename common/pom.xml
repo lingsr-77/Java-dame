@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example</groupId>
+        <artifactId>microservices-learning</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>common</artifactId>
+    <!--
+        packaging=jar：这是默认值，common 模块最终编译成一个 .jar 文件，
+        供其他模块引用。common 不是可启动的服务，所以没有 main 方法。
+    -->
+    <packaging>jar</packaging>
+    <name>Common Shared Library</name>
+
+    <!--
+        common 模块只放共享代码（DTO + Feign 接口定义）。
+        引入 OpenFeign 是因为 UserServiceApi 需要 @FeignClient 注解。
+        这里不引入 Web、JPA 等，因为 common 不需要启动服务或连数据库。
+    -->
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+    </dependencies>
+</project>

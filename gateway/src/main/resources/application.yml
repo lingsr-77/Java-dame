@@ -1,0 +1,72 @@
+server:
+  port: 8080           # 网关用 8080，是系统的统一入口
+
+spring:
+  application:
+    name: gateway
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+
+    # ===== 网关路由配置 =====
+    # 这是网关最核心的配置。
+    # 每个路由定义了：什么样的请求，转发到哪个服务。
+    gateway:
+      # discovery.locator.enabled=false：
+      #   关闭自动路由发现。如果开启，Gateway 会为 Nacos 中每个服务
+      #   自动创建路由（/service-name/...），很方便但不够透明。
+      #   我们选择手动配置，以便理解每个路由的含义。
+      discovery:
+        locator:
+          enabled: false
+
+      routes:
+        # ---- 路由 1：订单服务 ----
+        - id: order-service-route       # 路由 ID（唯一标识，随意命名）
+          # uri 的 lb:// 协议：lb = LoadBalanced（负载均衡的）
+          # Gateway 会从 Nacos 查找 order-service 的所有实例，
+          # 然后通过 LoadBalancer 选一个转发请求。
+          # 如果不加 LoadBalancer 依赖，lb:// 不生效！
+          uri: lb://order-service
+          predicates:
+            # 断言（Predicate）：什么样的请求匹配这条路由
+            # Path=/api/orders/** 表示路径以 /api/orders 开头的请求，
+            # 都转发到 order-service
+            - Path=/api/orders/**
+
+        # ---- 路由 2：用户服务 ----
+        - id: user-service-route
+          uri: lb://user-service
+          predicates:
+            # 匹配 /api/users/** 和 /api/hello 路径
+            - Path=/api/users/**,/api/hello
+
+      # === 全局过滤器 ===
+      default-filters:
+        # 给每个转发的请求加一个 Header，方便后端追踪
+        - AddRequestHeader=X-Gateway-Host, ${HOSTNAME:unknown}
+
+    # === Sentinel 网关限流 ===
+    sentinel:
+      eager: true
+      transport:
+        dashboard: localhost:8858
+        port: 8719
+      # 被限流时的返回内容
+      scg:
+        fallback:
+          mode: response
+          response-status: 429
+          response-body: '{"code":429,"message":"Too many requests, please try later."}'
+
+# === Actuator ===
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,gateway
+  metrics:
+    tags:
+      application: gateway

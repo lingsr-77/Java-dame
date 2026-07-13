@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.example</groupId>
+        <artifactId>microservices-learning</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>order-service</artifactId>
+    <packaging>jar</packaging>
+    <name>Order Service</name>
+
+    <dependencies>
+        <!--
+            === 基础框架 ===
+            spring-boot-starter-web：
+            内嵌 Tomcat 容器，提供 @RestController、@RequestMapping 等能力。
+            每个微服务都是一个独立的 Spring Boot 应用，各自跑在自己的 Tomcat 里。
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!--
+            spring-boot-starter-actuator：
+            暴露 /actuator/health（健康检查）、/actuator/prometheus（指标采集）。
+            Nacos 通过 /actuator/health 判断服务是否存活。
+            Prometheus 通过 /actuator/prometheus 拉取 JVM 内存、GC、请求量等指标。
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!--
+            === 数据库 ===
+            JPA + MySQL：订单数据持久化。
+            微服务理念中，每个服务应该有自己独立的数据库。
+            但学习阶段我们共享一个 MySQL 实例，通过不同的表来逻辑隔离。
+        -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!--
+            micrometer-registry-prometheus：
+            将 Actuator 的指标数据转换为 Prometheus 格式，
+            暴露在 /actuator/prometheus 端点。
+        -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <!--
+            === 服务注册与发现 ===
+            spring-cloud-starter-alibaba-nacos-discovery：
+            启动时自动向 Nacos 注册（"我是 order-service，地址是 xxx:8081"），
+            并定时发送心跳（默认 5 秒一次）。
+            同时作为客户端，可以从 Nacos 拉取其他服务的实例列表。
+        -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+
+        <!--
+            === 配置中心 ===
+            spring-cloud-starter-alibaba-nacos-config：
+            从 Nacos 远程加载配置文件，支持动态刷新（@RefreshScope）。
+            这样改配置不需要重启服务。
+        -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+        </dependency>
+
+        <!--
+            === 负载均衡 ===
+            spring-cloud-starter-loadbalancer：
+            Feign 通过服务名（"user-service"）从 Nacos 拿到实例列表后，
+            由 LoadBalancer 决定具体调哪一个实例（默认轮询）。
+            ⚠️ 没有它，Feign 会抛 "UnknownHostException: user-service"！
+        -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+
+        <!--
+            === 远程调用 ===
+            spring-cloud-starter-openfeign：
+            让你用声明式接口（@FeignClient）调用其他服务，
+            自动处理 HTTP 请求、JSON 序列化、负载均衡。
+            不需要手写 RestTemplate。
+        -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <!--
+            === 熔断与限流 ===
+            spring-cloud-starter-alibaba-sentinel：
+            为 Feign 调用和自身接口提供熔断、降级、限流保护。
+            控制台可以看到实时的 QPS、响应时间、熔断状态。
+        -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+        </dependency>
+
+        <!--
+            === 共享模块 ===
+            引用 common 模块中的 DTO 和 Feign 接口定义。
+        -->
+        <dependency>
+            <groupId>com.example</groupId>
+            <artifactId>common</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+                spring-boot-maven-plugin：
+                把模块打成可执行的 fat jar（包含所有依赖 + 内嵌 Tomcat）。
+                java -jar order-service.jar 就能直接启动。
+            -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
