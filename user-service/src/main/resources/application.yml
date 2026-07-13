@@ -10,12 +10,14 @@ server:
 spring:
   application:
     name: user-service
+  config:
+    import: optional:nacos:user-service.yml
 
   # === 数据库配置 ===
   # 学习阶段 order-service 和 user-service 共享一个 MySQL 实例。
   # 实际生产环境中，每个微服务应该有独立的数据库。
   datasource:
-    url: jdbc:mysql://localhost:3306/demo?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    url: jdbc:mysql://119.29.107.50:3306/demo?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
     username: root
     password: root123
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -27,7 +29,7 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: localhost:8848
+        server-addr: 119.29.107.50:8848
         # Spring Cloud LoadBalancer 从 Nacos 拿到实例列表后，
         # 默认用轮询策略选择调用哪个实例。
         register-enabled: true   # 启动时注册到 Nacos
@@ -37,7 +39,7 @@ spring:
       # 不设这个，Sentinel Dashboard 里要发一次请求才能看到服务。
       eager: true
       transport:
-        dashboard: localhost:8858   # Sentinel Dashboard 地址
+        dashboard: 119.29.107.50:8858   # Sentinel Dashboard 地址
         port: 8719                  # Sentinel 客户端通信端口
 
 # === Actuator 配置 ===

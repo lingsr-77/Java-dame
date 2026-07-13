@@ -4,10 +4,12 @@ server:
 spring:
   application:
     name: order-service
+  config:
+    import: optional:nacos:order-service.yml
 
   # === 数据库 ===
   datasource:
-    url: jdbc:mysql://localhost:3306/demo?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
+    url: jdbc:mysql://119.29.107.50:3306/demo?useSSL=false&allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true
     username: root
     password: root123
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -19,21 +21,21 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: localhost:8848
+        server-addr: 119.29.107.50:8848
         register-enabled: true
 
     # === Sentinel 配置 ===
     sentinel:
       eager: true                       # 启动时初始化（不等第一次请求）
       transport:
-        dashboard: localhost:8858       # Sentinel 控制台地址
+        dashboard: 119.29.107.50:8858       # Sentinel 控制台地址
         port: 8719                      # 与 Dashboard 通信的本地端口
       # 注意：生产环境应该把 Sentinel 规则存到 Nacos 配置中心，
       # 这样规则不会因为服务重启而丢失。
       # datasource:
       #   ds1:
       #     nacos:
-      #       server-addr: localhost:8848
+      #       server-addr: 119.29.107.50:8848
       #       data-id: order-service-sentinel-rules
       #       group-id: DEFAULT_GROUP
       #       data-type: json
