@@ -39,6 +39,17 @@ spring.cloud.openfeign.client.config.default:
   connectTimeout: 5000
   readTimeout: 10000
 
+# === 定时任务模拟故障率（0.0~1.0，默认 0.3） ===
+# 设为 1.0 可以每次触发都失败，方便测试重试+告警全流程
+task:
+  failure:
+    rate: 0.3  # 30% 概率模拟故障，测试完可改为 0 关闭
+
+# === 企业微信机器人 Webhook ===
+wecom:
+  webhook:
+    url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=65795771-f71d-4942-9b48-e0518156dcd8
+
 management:
   endpoints:
     web:

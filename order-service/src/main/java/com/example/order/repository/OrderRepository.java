@@ -19,4 +19,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * 这就是你之前做慢查询分析时看到的那个 SQL。
      */
     List<Order> findByUserId(Long userId);
+
+    List<Order> findByStatus(String status);
 }
